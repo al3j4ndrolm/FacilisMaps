@@ -142,10 +142,10 @@ Then add one dependency (min SDK 26):
 
 ```kotlin
 // Compose apps: Map(...), rememberLocation and rememberMarkerIcon, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.1.0")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.1.1")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.1.0")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.1.1")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.
@@ -153,7 +153,7 @@ No manifest changes: the internet and location permissions are merged in for you
 ## Good to know
 
 - **Map tiles:** OpenFreeMap is free and needs no key, but it's run by volunteers. To use another provider, set `maps.lightStyle` and `maps.darkStyle` to its style URLs once, in `Application.onCreate`. Keep the map's attribution button visible; OpenStreetMap's license requires it.
-- **Location:** uses Google Play services when the phone has it, and the phone's own GPS otherwise. Updates come while your app is open; background tracking isn't included.
+- **Location:** uses Google Play services when the phone has it, and the phone's own GPS otherwise. Updates come while your app is open; background tracking isn't included. `location.current()` can be called anywhere, even a ViewModel's `init`: the permission dialog waits until your screen is showing.
 - **Addresses** use Android's built-in geocoder, which needs a network connection.
 - **Lines** are straight between your points. Routes along roads need a routing service and aren't included; `maps.directions` hands that to the user's maps app.
 - **App size:** MapLibre's native code adds about 10 MB per CPU type. Play Store bundles download only the one each phone needs.

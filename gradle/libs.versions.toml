@@ -10,7 +10,7 @@ junit = "4.13.2"
 coroutines = "1.10.2"
 maplibre = "13.6.1"
 playServicesLocation = "21.4.0"
-facilisPermission = "1.0.0"
+facilisPermission = "1.0.1"
 
 [libraries]
 androidx-startup = { group = "androidx.startup", name = "startup-runtime", version.ref = "startup" }
