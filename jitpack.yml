@@ -1,0 +1,4 @@
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :maps:publishReleasePublicationToMavenLocal :maps-compose:publishReleasePublicationToMavenLocal
