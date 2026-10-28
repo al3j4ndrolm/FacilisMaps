@@ -2,6 +2,7 @@ package io.github.al3j4ndrolm.facilis.maps.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import io.github.al3j4ndrolm.facilis.maps.MapStyle
@@ -39,17 +40,20 @@ fun Map(
 ) {
     // Only move the camera when center or zoom change, so recomposing doesn't undo the user's panning.
     val applied = remember { arrayOfNulls<Any>(2) }
+    val parent = rememberCompositionContext()
+    val icons = remember { arrayOfNulls<ContentIcons>(1) }
     AndroidView(
         modifier = modifier,
-        factory = { MapView(it) },
+        factory = { MapView(it).also { view -> icons[0] = ContentIcons(view, parent) } },
         update = { view ->
-            view.markers = markers
+            val contentIcons = icons[0]!!
+            contentIcons.show(markers)
             view.shapes = shapes
             view.showMyLocation = showMyLocation
             view.mapStyle = style
             view.onTap = onTap
             view.onLongPress = onLongPress
-            view.onMarkerTap = onMarkerTap
+            view.onMarkerTap = onMarkerTap?.let { tap -> { tapped -> tap(contentIcons.original(tapped)) } }
             view.onMoved = onMoved
             if (center != null && (center != applied[0] || zoom != applied[1])) {
                 applied[0] = center
@@ -57,6 +61,9 @@ fun Map(
                 view.moveTo(center, zoom)
             }
         },
-        onRelease = { it.destroy() },
+        onRelease = {
+            icons[0]?.release()
+            it.destroy()
+        },
     )
 }

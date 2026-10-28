@@ -52,9 +52,11 @@ import org.maplibre.geojson.Point as GeoPoint
 /**
  * A pin on the map. [data] comes back in `onMarkerTap`, so you can tell markers apart.
  *
+ * In Compose, a marker can also be your own composable: `Marker(point) { Avatar(user) }`.
+ *
  * @param color the pin's color. Not used with an [icon].
  * @param icon shown instead of the pin, with its bottom middle on [point]: a drawable
- *   (`icon = R.drawable.ic_cafe`), or an image made with `rememberMarkerIcon { }` in Compose.
+ *   (`icon = R.drawable.ic_cafe`) or an image ([MarkerIcon.Image]).
  */
 data class Marker(
     val point: Point,
@@ -74,15 +76,12 @@ data class Marker(
 }
 
 /** A custom look for a [Marker]. */
-sealed interface MarkerIcon {
+interface MarkerIcon {
 
     /** A drawable, drawn [MARKER_ICON_SIZE_DP] dp on its longest side, in its own colors. */
     data class Resource(@DrawableRes val id: Int) : MarkerIcon
 
-    /**
-     * Any image, drawn at its own pixel size. In Compose, `rememberMarkerIcon { }` makes one from
-     * a composable. Two images are the same icon only if they're the same object.
-     */
+    /** Any image, drawn at its own pixel size. Two images are the same icon only if they're the same object. */
     class Image(val bitmap: Bitmap) : MarkerIcon {
         internal val key = nextImageKey.incrementAndGet()
 
@@ -473,6 +472,8 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
                 } ?: pin(s, marker.color)
             }
         }
+        // A composable marker outside a Compose Map, which is what draws those.
+        else -> pin(s, marker.color)
     }
 
     private fun pin(s: Style, color: Int): String {

@@ -96,12 +96,13 @@ Marker(sjsu, "Class", color = 0xFF43A047.toInt())         // any color
 Marker(cafe, "Coffee", icon = R.drawable.ic_cafe)         // your drawable, 36 dp
 ```
 
-Or draw one with Compose. It's drawn into an image once (so hundreds of markers stay fast) and again whenever one of its keys changes:
+Or make it any composable, in Compose:
 
 ```kotlin
-val alex = rememberMarkerIcon(unread) { Avatar("AL", unread, Modifier.size(48.dp)) }
-Map(markers = listOf(Marker(alexSpot, "Alex", icon = alex)))
+Marker(here) { PhotoImage(photo, Modifier.size(40.dp).clip(CircleShape)) }
 ```
+
+You can build it anywhere, a ViewModel included, and keep it in a list like any other marker. The map draws it, and draws it again whenever it changes, for example once a photo has loaded. Give it a size. It's shown as a picture, so hundreds stay fast, and taps go to `onMarkerTap` rather than to buttons inside it.
 
 ## Lines and circles
 
@@ -141,11 +142,11 @@ dependencyResolutionManagement {
 Then add one dependency (min SDK 26):
 
 ```kotlin
-// Compose apps: Map(...), rememberLocation and rememberMarkerIcon, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.1.2")
+// Compose apps: Map(...), composable markers and rememberLocation, plus everything else
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.2.0")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.1.2")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.2.0")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.
@@ -164,7 +165,7 @@ No manifest changes: the internet and location permissions are merged in for you
 ./gradlew :maps:testDebugUnitTest :maps:assembleRelease :maps-compose:assembleRelease :sample:assembleDebug
 ```
 
-`maps/` is the library (location, maps apps, `MapView`), `maps-compose/` the Compose `Map`, `rememberLocation` and `rememberMarkerIcon`, and `sample/` a demo app.
+`maps/` is the library (location, maps apps, `MapView`), `maps-compose/` the Compose `Map`, composable markers and `rememberLocation`, and `sample/` a demo app.
 
 ## License
 

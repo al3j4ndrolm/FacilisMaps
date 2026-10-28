@@ -46,7 +46,7 @@ import io.github.al3j4ndrolm.facilis.maps.Travel
 import io.github.al3j4ndrolm.facilis.maps.compose.Map
 import io.github.al3j4ndrolm.facilis.maps.compose.rememberLiveLocation
 import io.github.al3j4ndrolm.facilis.maps.compose.rememberLocation
-import io.github.al3j4ndrolm.facilis.maps.compose.rememberMarkerIcon
+import io.github.al3j4ndrolm.facilis.maps.compose.Marker
 import io.github.al3j4ndrolm.facilis.maps.location
 import io.github.al3j4ndrolm.facilis.maps.maps
 import io.github.al3j4ndrolm.facilis.maps.meters
@@ -91,8 +91,6 @@ private fun Demo() {
     var center by remember { mutableStateOf<Point?>(null) }
     var dropped by remember { mutableStateOf(listOf<Marker>()) }
     var waves by remember { mutableIntStateOf(0) }
-    // A marker drawn from a composable; redrawn when the wave count changes.
-    val alex = rememberMarkerIcon(waves) { FriendBubble(initials = "AL", waves = waves) }
     // Where you were when the screen opened, and where you are now.
     val start = rememberLocation()
     val live = rememberLiveLocation()
@@ -103,7 +101,8 @@ private fun Demo() {
         Map(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             center = center,
-            markers = campus + Marker(alexSpot, "Alex", data = "alex", icon = alex) + dropped,
+            // Alex is drawn by a composable, and drawn again when the wave count changes.
+            markers = campus + Marker(alexSpot, "Alex", data = "alex") { FriendBubble(initials = "AL", waves = waves) } + dropped,
             shapes = listOf(Circle(sjsu, 400.meters), Line(route)),
             showMyLocation = true,
             onMarkerTap = { marker ->
