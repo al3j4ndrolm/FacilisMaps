@@ -142,10 +142,10 @@ Then add one dependency (min SDK 26):
 
 ```kotlin
 // Compose apps: Map(...), rememberLocation and rememberMarkerIcon, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.1.1")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.1.2")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.1.1")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.1.2")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.
