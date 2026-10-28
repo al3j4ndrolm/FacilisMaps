@@ -21,6 +21,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdate
@@ -540,7 +541,11 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         if (!location.allowed) {
             if (askedForLocation) return
             askedForLocation = true
-            scope.launch { if (location.askPermission()) updateMyLocation() }
+            scope.launch {
+                // The dialog can't show before the screen does (e.g. behind the lock screen).
+                findViewTreeLifecycleOwner()?.lifecycle?.currentStateFlow?.first { it.isAtLeast(Lifecycle.State.RESUMED) }
+                if (location.requestPermission()) updateMyLocation()
+            }
             return
         }
         if (!component.isLocationComponentActivated) {

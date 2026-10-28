@@ -33,6 +33,7 @@ dependencies {
     api(project(":maps"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 }
 
 publishing {

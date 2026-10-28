@@ -32,7 +32,15 @@ location.watch().collect { point -> }          // live updates while you collect
 here.distanceTo(sjsu)                          // 1.2 km
 ```
 
-Every call asks for the location permission the first time (precise or approximate, the user picks). `location.allowed` tells you without asking. No coroutines? `location.current { here -> }`.
+In Compose:
+
+```kotlin
+val here = rememberLocation()                  // Point?, null until found
+val live = rememberLiveLocation()              // follows you while the screen is visible
+Map(center = here, showMyLocation = true)
+```
+
+Every call asks for the location permission the first time (precise or approximate, the user picks). `location.allowed` tells you without asking, and `location.requestPermission()` asks up front. No coroutines? `location.current { here -> }`.
 
 ## Addresses
 
@@ -133,11 +141,11 @@ dependencyResolutionManagement {
 Then add one dependency (min SDK 26):
 
 ```kotlin
-// Compose apps: Map(...) and rememberMarkerIcon, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.0.0")
+// Compose apps: Map(...), rememberLocation and rememberMarkerIcon, plus everything else
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.1.0")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.0.0")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.1.0")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.
@@ -156,7 +164,7 @@ No manifest changes: the internet and location permissions are merged in for you
 ./gradlew :maps:testDebugUnitTest :maps:assembleRelease :maps-compose:assembleRelease :sample:assembleDebug
 ```
 
-`maps/` is the library (location, maps apps, `MapView`), `maps-compose/` the Compose `Map` and `rememberMarkerIcon`, and `sample/` a demo app.
+`maps/` is the library (location, maps apps, `MapView`), `maps-compose/` the Compose `Map`, `rememberLocation` and `rememberMarkerIcon`, and `sample/` a demo app.
 
 ## License
 

@@ -64,7 +64,7 @@ object FacilisLocation {
      * @return null if the permission was denied, location is off, or there was no fix within [timeout].
      */
     suspend fun current(timeout: Duration = 15.seconds): Point? {
-        if (!askPermission()) return null
+        if (!requestPermission()) return null
         return withTimeoutOrNull(timeout) { if (hasPlayServices()) fusedCurrent() else platformCurrent() }
             ?.toPoint()
             ?: run { warn("No location fix. Is location turned on?"); null }
@@ -77,7 +77,7 @@ object FacilisLocation {
 
     /** The last known location: instant, but may be a few minutes old. Asks for the permission if needed. */
     suspend fun last(): Point? {
-        if (!askPermission()) return null
+        if (!requestPermission()) return null
         return if (hasPlayServices()) {
             LocationServices.getFusedLocationProviderClient(context).lastLocation.awaitOrNull()?.toPoint()
         } else {
@@ -95,7 +95,7 @@ object FacilisLocation {
      */
     @SuppressLint("MissingPermission") // asked just above
     fun watch(every: Duration = 5.seconds): Flow<Point> = callbackFlow {
-        if (!askPermission()) {
+        if (!requestPermission()) {
             close()
             return@callbackFlow
         }
@@ -148,10 +148,11 @@ object FacilisLocation {
     /** Whether the location permission is granted (precise or approximate). Doesn't ask. */
     val allowed: Boolean get() = permissions.check(Permission.Location)
 
-    // region Internal
-
-    internal suspend fun askPermission(): Boolean =
+    /** Asks for the location permission if it isn't granted yet. Returns whether it is now. */
+    suspend fun requestPermission(): Boolean =
         allowed || permissions.request(Permission.Location).also { if (!it) warn("Location permission denied.") }
+
+    // region Internal
 
     private fun hasPlayServices(): Boolean =
         GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS

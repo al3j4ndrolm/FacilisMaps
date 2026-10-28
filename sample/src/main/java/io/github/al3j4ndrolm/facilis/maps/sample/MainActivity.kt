@@ -44,6 +44,8 @@ import io.github.al3j4ndrolm.facilis.maps.Marker
 import io.github.al3j4ndrolm.facilis.maps.Point
 import io.github.al3j4ndrolm.facilis.maps.Travel
 import io.github.al3j4ndrolm.facilis.maps.compose.Map
+import io.github.al3j4ndrolm.facilis.maps.compose.rememberLiveLocation
+import io.github.al3j4ndrolm.facilis.maps.compose.rememberLocation
 import io.github.al3j4ndrolm.facilis.maps.compose.rememberMarkerIcon
 import io.github.al3j4ndrolm.facilis.maps.location
 import io.github.al3j4ndrolm.facilis.maps.maps
@@ -91,6 +93,9 @@ private fun Demo() {
     var waves by remember { mutableIntStateOf(0) }
     // A marker drawn from a composable; redrawn when the wave count changes.
     val alex = rememberMarkerIcon(waves) { FriendBubble(initials = "AL", waves = waves) }
+    // Where you were when the screen opened, and where you are now.
+    val start = rememberLocation()
+    val live = rememberLiveLocation()
     // Map<K, V> still means Kotlin's map next to the Map composable.
     val counts: Map<String, Int> = mapOf("pins" to campus.size)
 
@@ -114,6 +119,11 @@ private fun Demo() {
             },
         )
         Column(Modifier.navigationBarsPadding().padding(16.dp)) {
+            Text(
+                if (live == null) "Finding you…" else "Live: ${live.distanceTo(sjsu)} from SJSU (started ${start?.distanceTo(sjsu) ?: "?"})",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
             Text(status, style = MaterialTheme.typography.bodyMedium, minLines = 2, maxLines = 3)
             FlowRow(
                 Modifier.padding(top = 8.dp),
