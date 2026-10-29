@@ -235,7 +235,14 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
             return
         }
         val target = zoom ?: m.cameraPosition.zoom.takeIf { it >= MIN_STREET_ZOOM } ?: STREET_ZOOM
-        apply(m, CameraUpdateFactory.newLatLngZoom(point.toLatLng(), target), animate)
+        val update = CameraUpdateFactory.newLatLngZoom(point.toLatLng(), target)
+        // A spot already on screen (e.g. following the user) slides there, without the zoom out and
+        // back in of a fly, which makes the labels redraw.
+        if (animate && target == m.cameraPosition.zoom && m.projection.visibleRegion.latLngBounds.contains(point.toLatLng())) {
+            m.easeCamera(update, ANIMATION_MS)
+        } else {
+            apply(m, update, animate)
+        }
     }
 
     /** Moves and zooms the map so all [points] show. Defaults to every marker and shape. */
