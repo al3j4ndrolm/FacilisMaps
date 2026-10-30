@@ -22,6 +22,16 @@ data class Point(val lat: Double, val lng: Double) {
     /** Straight-line distance ("as the crow flies"), not along roads. */
     fun distanceTo(other: Point): Distance = Distance(metersBetween(this, other))
 
+    /** The direction from here to [other], in degrees: 0 is north, 90 east, 180 south, 270 west. */
+    fun bearingTo(other: Point): Double {
+        val lat1 = Math.toRadians(lat)
+        val lat2 = Math.toRadians(other.lat)
+        val dLng = Math.toRadians(other.lng - lng)
+        val y = sin(dLng) * cos(lat2)
+        val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLng)
+        return (Math.toDegrees(atan2(y, x)) + 360) % 360
+    }
+
     override fun toString(): String = String.format(Locale.US, "%.6f, %.6f", lat, lng)
 }
 
@@ -62,6 +72,12 @@ internal fun metersBetween(a: Point, b: Point): Double {
     val h = sin(dLat / 2).let { it * it } +
         cos(Math.toRadians(a.lat)) * cos(Math.toRadians(b.lat)) * sin(dLng / 2).let { it * it }
     return 2 * EARTH_RADIUS_METERS * asin(sqrt(h.coerceIn(0.0, 1.0)))
+}
+
+/** How far apart two directions are, in degrees (0 to 180), going the short way around. */
+internal fun angleBetween(a: Double, b: Double): Double {
+    val d = ((b - a) % 360 + 360) % 360
+    return if (d > 180) 360 - d else d
 }
 
 /** The point [meters] away from [from], heading [bearingDegrees] (0 = north, 90 = east). */

@@ -33,6 +33,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -93,8 +94,11 @@ object FacilisLocation {
      * location.watch().collect { here -> }
      * ```
      */
+    fun watch(every: Duration = 5.seconds): Flow<Point> = fixes(every).map { it.toPoint() }
+
+    /** Like [watch], with everything the phone knows about each fix, e.g. the direction of travel. */
     @SuppressLint("MissingPermission") // asked just above
-    fun watch(every: Duration = 5.seconds): Flow<Point> = callbackFlow {
+    internal fun fixes(every: Duration): Flow<Location> = callbackFlow {
         if (!requestPermission()) {
             close()
             return@callbackFlow
@@ -104,7 +108,7 @@ object FacilisLocation {
             val client = LocationServices.getFusedLocationProviderClient(context)
             val callback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
-                    result.lastLocation?.let { trySend(it.toPoint()) }
+                    result.lastLocation?.let { trySend(it) }
                 }
             }
             client.requestLocationUpdates(
@@ -115,7 +119,7 @@ object FacilisLocation {
             awaitClose { client.removeLocationUpdates(callback) }
         } else {
             val manager = locationManager()
-            val listener = LocationListenerCompat { trySend(it.toPoint()) }
+            val listener = LocationListenerCompat { trySend(it) }
             LocationManagerCompat.requestLocationUpdates(
                 manager, platformProvider(), LocationRequestCompat.Builder(millis).build(), listener, Looper.getMainLooper(),
             )

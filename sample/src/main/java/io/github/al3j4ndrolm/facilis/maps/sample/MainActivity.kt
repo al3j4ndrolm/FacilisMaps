@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.al3j4ndrolm.facilis.maps.Circle
+import io.github.al3j4ndrolm.facilis.maps.Heading
 import io.github.al3j4ndrolm.facilis.maps.Line
 import io.github.al3j4ndrolm.facilis.maps.Marker
 import io.github.al3j4ndrolm.facilis.maps.Point
@@ -91,6 +92,7 @@ private fun Demo() {
     var center by remember { mutableStateOf<Point?>(null) }
     var dropped by remember { mutableStateOf(listOf<Marker>()) }
     var waves by remember { mutableIntStateOf(0) }
+    var heading by remember { mutableStateOf<Heading>(Heading.North) }
     // Where you were when the screen opened, and where you are now.
     val start = rememberLocation()
     val live = rememberLiveLocation()
@@ -101,6 +103,7 @@ private fun Demo() {
         Map(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             center = center,
+            heading = heading,
             // Alex is drawn by a composable, and drawn again when the wave count changes.
             markers = campus + Marker(alexSpot, "Alex", data = "alex") { FriendBubble(initials = "AL", waves = waves) } + dropped,
             shapes = listOf(Circle(sjsu, 400.meters), Line(route)),
@@ -147,11 +150,27 @@ private fun Demo() {
                         if (found != null) center = found
                     }
                 }) { Text("Find address") }
+                OutlinedButton(onClick = {
+                    heading = when (heading) {
+                        Heading.North -> Heading.Walking
+                        Heading.Walking -> Heading.Phone
+                        Heading.Phone -> Heading.Towards(alexSpot)
+                        else -> Heading.North
+                    }
+                }) { Text("Facing: ${headingName(heading)}") }
                 OutlinedButton(onClick = { maps.open(engineering, label = "Engineering") }) { Text("Open in maps") }
                 OutlinedButton(onClick = { maps.directions(to = engineering, by = Travel.Walking) }) { Text("Walk to class") }
             }
         }
     }
+}
+
+private fun headingName(heading: Heading) = when (heading) {
+    Heading.North -> "north"
+    Heading.Walking -> "where I walk"
+    Heading.Phone -> "where the phone points"
+    is Heading.Towards -> "Alex"
+    is Heading.Degrees -> "${heading.degrees}°"
 }
 
 /** A friend's avatar with a badge counting your waves: the content of a composable marker. */

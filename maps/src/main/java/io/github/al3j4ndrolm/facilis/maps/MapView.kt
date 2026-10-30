@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
@@ -19,12 +20,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.findViewTreeLifecycleOwner
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
-import org.maplibre.android.camera.CameraUpdate
+import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
@@ -155,6 +157,17 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
             loadStyle()
         }
 
+    /**
+     * Which way the top of the map points: [Heading.North], the way the user walks
+     * ([Heading.Walking]), the way the phone points ([Heading.Phone]), a fixed direction or toward a place.
+     */
+    var heading: Heading = Heading.North
+        set(value) {
+            if (field == value) return
+            field = value
+            applyHeading()
+        }
+
     /** Runs when the user taps the map (not a marker). */
     var onTap: ((Point) -> Unit)? = null
 
@@ -195,6 +208,11 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
     private var askedForLocation = false
     private var cameraMoves = 0
 
+    /** Where the camera is headed while it moves, so a turn of the map carries on the move under way. */
+    private var goingTo: CameraPosition? = null
+    private var arrivesAt = 0L
+    private var headingJob: Job? = null
+
     private var owner: LifecycleOwner? = null
     private var attached = false
     private var stage = Stage.Created
@@ -234,15 +252,14 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
             pendingCamera = Camera.MoveTo(point, zoom, animate)
             return
         }
-        val target = zoom ?: m.cameraPosition.zoom.takeIf { it >= MIN_STREET_ZOOM } ?: STREET_ZOOM
-        val update = CameraUpdateFactory.newLatLngZoom(point.toLatLng(), target)
+        val here = goingTo ?: m.cameraPosition
+        val target = zoom ?: here.zoom.takeIf { it >= MIN_STREET_ZOOM } ?: STREET_ZOOM
+        val bearing = (heading as? Heading.Towards)?.let { point.bearingTo(it.point) } ?: here.bearing
+        val position = CameraPosition.Builder(here).target(point.toLatLng()).zoom(target).bearing(bearing).build()
         // A spot already on screen (e.g. following the user) slides there, without the zoom out and
         // back in of a fly, which makes the labels redraw.
-        if (animate && target == m.cameraPosition.zoom && m.projection.visibleRegion.latLngBounds.contains(point.toLatLng())) {
-            m.easeCamera(update, ANIMATION_MS)
-        } else {
-            apply(m, update, animate)
-        }
+        val near = target == here.zoom && m.projection.visibleRegion.latLngBounds.contains(point.toLatLng())
+        go(m, position, animate, fly = !near)
     }
 
     /** Moves and zooms the map so all [points] show. Defaults to every marker and shape. */
@@ -256,7 +273,10 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         val b = boundsOf(points) ?: return
         if (b.isSpot) return moveTo(Point(b.north, b.east), STREET_ZOOM, animate)
         val padding = (FIT_PADDING_DP * resources.displayMetrics.density).toInt()
-        apply(m, CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(b.north, b.east, b.south, b.west), padding), animate)
+        val here = goingTo ?: m.cameraPosition
+        val bounds = LatLngBounds.from(b.north, b.east, b.south, b.west)
+        val position = m.getCameraForLatLngBounds(bounds, IntArray(4) { padding }, here.bearing, here.tilt) ?: return
+        go(m, position, animate, fly = true)
     }
 
     /**
@@ -313,6 +333,7 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
             }
         }
         stage = target
+        followHeading()
     }
 
     // endregion
@@ -354,6 +375,7 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
             null -> if (everything().isNotEmpty()) fit(animate = false) else if (showMyLocation) goToMyLocation()
         }
         pendingCamera = null
+        applyHeading()
     }
 
     private fun goToMyLocation() {
@@ -365,8 +387,77 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         }
     }
 
-    private fun apply(m: MapLibreMap, update: CameraUpdate, animate: Boolean) {
-        if (animate) m.animateCamera(update, ANIMATION_MS) else m.moveCamera(update)
+    /**
+     * Moves the camera to [position]. MapLibre runs one camera move at a time and a new one cancels
+     * the last, so every move goes through here and starts from where the last one was headed.
+     */
+    private fun go(
+        m: MapLibreMap,
+        position: CameraPosition,
+        animate: Boolean,
+        fly: Boolean = false,
+        smooth: Boolean = true,
+        ms: Int = ANIMATION_MS,
+    ) {
+        val update = CameraUpdateFactory.newCameraPosition(position)
+        if (!animate) {
+            goingTo = null
+            m.moveCamera(update)
+            return
+        }
+        goingTo = position
+        arrivesAt = SystemClock.uptimeMillis() + ms
+        val done = object : MapLibreMap.CancelableCallback {
+            override fun onCancel() = arrived(position)
+            override fun onFinish() = arrived(position)
+        }
+        if (fly) m.animateCamera(update, ms, done) else m.easeCamera(update, ms, smooth, done)
+    }
+
+    private fun arrived(position: CameraPosition) {
+        if (goingTo === position) goingTo = null
+    }
+
+    /** Turns the map so its top points to [degrees], finishing any move under way at the same time. */
+    private fun turnTo(degrees: Double, smooth: Boolean = true, ms: Int = ANIMATION_MS) {
+        val m = map ?: return
+        if (!cameraReady) return
+        val here = goingTo ?: m.cameraPosition
+        if (angleBetween(here.bearing, degrees) < MIN_TURN_DEGREES) return
+        // Don't rush a move under way (e.g. following the user): give the turn at least its time left.
+        val left = if (goingTo != null) (arrivesAt - SystemClock.uptimeMillis()).toInt() else 0
+        go(m, CameraPosition.Builder(here).bearing(degrees).build(), animate = true, smooth = smooth, ms = maxOf(ms, left))
+    }
+
+    private fun applyHeading() {
+        headingJob?.cancel()
+        headingJob = null
+        val m = map ?: return
+        if (!cameraReady) return
+        when (val h = heading) {
+            Heading.North -> turnTo(0.0)
+            is Heading.Degrees -> turnTo(h.degrees)
+            is Heading.Towards -> (goingTo ?: m.cameraPosition).target?.let { turnTo(it.toPoint().bearingTo(h.point)) }
+            Heading.Walking, Heading.Phone -> followHeading()
+        }
+    }
+
+    /** Keeps turning the map for [Heading.Walking] or [Heading.Phone], while the map is on screen. */
+    private fun followHeading() {
+        val live = heading == Heading.Walking || heading == Heading.Phone
+        if (!live || stage != Stage.Resumed || !cameraReady || destroyed) {
+            headingJob?.cancel()
+            headingJob = null
+            return
+        }
+        if (headingJob != null) return
+        headingJob = scope.launch {
+            if (heading == Heading.Walking) {
+                walkingDirections().collect { turnTo(it) }
+            } else {
+                compassDirections(context).collect { turnTo(it, smooth = false, ms = COMPASS_TURN_MS) }
+            }
+        }
     }
 
     private fun everything(): List<Point> = markers.map { it.point } + shapes.flatMap { shape ->
@@ -585,6 +676,8 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         const val FIT_PADDING_DP = 48
         const val TAP_SLOP_DP = 12
         const val ANIMATION_MS = 600
+        const val COMPASS_TURN_MS = 150
+        const val MIN_TURN_DEGREES = 1.0
     }
 }
 

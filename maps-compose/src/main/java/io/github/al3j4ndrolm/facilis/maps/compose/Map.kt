@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import io.github.al3j4ndrolm.facilis.maps.Heading
 import io.github.al3j4ndrolm.facilis.maps.MapStyle
 import io.github.al3j4ndrolm.facilis.maps.MapView
 import io.github.al3j4ndrolm.facilis.maps.Marker
@@ -21,6 +22,8 @@ import io.github.al3j4ndrolm.facilis.maps.Shape
  * @param center where the map looks. Changing it moves the map there; leave it null to fit all
  *   [markers] and [shapes] (or the user's location with [showMyLocation]).
  * @param zoom 0 shows the whole world, 15 a neighborhood, 20 a building.
+ * @param heading which way the top of the map points: north, the way the user walks
+ *   (`Heading.Walking`), the way the phone points (`Heading.Phone`), a fixed direction or toward a place.
  * @param showMyLocation shows the user's location as a blue dot. Asks for the permission the first time.
  * @param onMoved runs with the new center each time the user stops moving the map.
  */
@@ -29,6 +32,7 @@ fun Map(
     modifier: Modifier = Modifier,
     center: Point? = null,
     zoom: Double? = null,
+    heading: Heading = Heading.North,
     markers: List<Marker> = emptyList(),
     shapes: List<Shape> = emptyList(),
     showMyLocation: Boolean = false,
@@ -55,6 +59,7 @@ fun Map(
             view.onLongPress = onLongPress
             view.onMarkerTap = onMarkerTap?.let { tap -> { tapped -> tap(contentIcons.original(tapped)) } }
             view.onMoved = onMoved
+            view.heading = heading
             if (center != null && (center != applied[0] || zoom != applied[1])) {
                 applied[0] = center
                 applied[1] = zoom

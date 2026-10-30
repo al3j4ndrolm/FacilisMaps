@@ -104,6 +104,22 @@ Marker(here) { PhotoImage(photo, Modifier.size(40.dp).clip(CircleShape)) }
 
 You can build it anywhere, a ViewModel included, and keep it in a list like any other marker. The map draws it, and draws it again whenever it changes, for example once a photo has loaded. Give it a size. It's shown as a picture, so hundreds stay fast, and taps go to `onMarkerTap` rather than to buttons inside it.
 
+## Which way is up
+
+```kotlin
+Map(center = here, showMyLocation = true, heading = Heading.Walking)
+```
+
+| `heading` | The top of the map points |
+|---|---|
+| `Heading.North` (default) | north; two fingers can still turn it |
+| `Heading.Walking` | the way the user is moving, from GPS; it stays put while they stand still |
+| `Heading.Phone` | where the top of the phone points, from its compass |
+| `Heading.Degrees(90.0)` | a fixed direction: 0 north, 90 east |
+| `Heading.Towards(cafe)` | toward a place, from the middle of the map |
+
+The map turns smoothly, and keeps following `center` while it turns. For your own math, `here.bearingTo(cafe)` gives the direction in degrees. Views: `map.heading = Heading.Phone`.
+
 ## Lines and circles
 
 ```kotlin
@@ -143,10 +159,10 @@ Then add one dependency (min SDK 26):
 
 ```kotlin
 // Compose apps: Map(...), composable markers and rememberLocation, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.2.2")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.3.0")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.2.2")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.3.0")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.

@@ -128,6 +128,32 @@ class MapsLogicTest {
 
     // endregion
 
+    // region Directions
+
+    @Test
+    fun `bearings point the right way`() {
+        val sjsu = Point(37.3352, -121.8811)
+        assertEquals(0.0, sjsu.bearingTo(Point(37.3452, -121.8811)), 0.01)
+        assertEquals(180.0, sjsu.bearingTo(Point(37.3252, -121.8811)), 0.01)
+        assertEquals(90.0, sjsu.bearingTo(Point(37.3352, -121.8711)), 0.1)
+        assertEquals(270.0, sjsu.bearingTo(Point(37.3352, -121.8911)), 0.1)
+        // Walking 100 m out at any heading and looking back gives that heading.
+        for (heading in listOf(10.0, 135.0, 225.0, 350.0)) {
+            assertEquals(heading, sjsu.bearingTo(destination(sjsu, 100.0, heading)), 0.01)
+        }
+    }
+
+    @Test
+    fun `angles are compared the short way around`() {
+        assertEquals(2.0, angleBetween(359.0, 1.0), 1e-9)
+        assertEquals(2.0, angleBetween(1.0, 359.0), 1e-9)
+        assertEquals(180.0, angleBetween(0.0, 180.0), 1e-9)
+        assertEquals(90.0, angleBetween(-45.0, 45.0), 1e-9)
+        assertEquals(0.0, angleBetween(720.0, 0.0), 1e-9)
+    }
+
+    // endregion
+
     // region Saving
 
     @Test
