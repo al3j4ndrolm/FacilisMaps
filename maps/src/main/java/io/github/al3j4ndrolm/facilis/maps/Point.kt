@@ -1,5 +1,6 @@
 package io.github.al3j4ndrolm.facilis.maps
 
+import kotlinx.serialization.Serializable
 import java.net.URLEncoder
 import java.util.Locale
 import kotlin.math.asin
@@ -9,7 +10,8 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** A spot on Earth, in degrees. */
+/** A spot on Earth, in degrees. Can be saved, e.g. with FacilisStorage. */
+@Serializable
 data class Point(val lat: Double, val lng: Double) {
 
     init {
@@ -24,6 +26,7 @@ data class Point(val lat: Double, val lng: Double) {
 }
 
 /** A length on the ground. Write it as `500.meters` or `1.5.km`. */
+@Serializable
 @JvmInline
 value class Distance(val meters: Double) : Comparable<Distance> {
     val kilometers: Double get() = meters / 1000

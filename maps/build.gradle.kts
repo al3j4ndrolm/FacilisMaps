@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.serialization)
     `maven-publish`
 }
 
@@ -27,6 +28,8 @@ android {
 }
 
 dependencies {
+    // Point and Distance can be saved, e.g. with FacilisStorage.
+    api(libs.kotlinx.serialization.core)
     implementation(libs.facilis.permission)
     implementation(libs.maplibre)
     implementation(libs.play.services.location)
@@ -36,6 +39,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.serialization.json)
 }
 
 publishing {

@@ -8,6 +8,7 @@ lifecycle = "2.11.0"
 composeBom = "2026.02.01"
 junit = "4.13.2"
 coroutines = "1.10.2"
+serialization = "1.9.0"
 maplibre = "13.6.1"
 playServicesLocation = "21.4.0"
 facilisPermission = "1.0.2"
@@ -23,6 +24,8 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "serialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 maplibre = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 facilis-permission = { group = "com.github.al3j4ndrolm.FacilisPermission", name = "permission", version.ref = "facilisPermission" }
@@ -32,3 +35,4 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

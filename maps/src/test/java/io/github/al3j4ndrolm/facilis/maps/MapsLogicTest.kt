@@ -1,5 +1,6 @@
 package io.github.al3j4ndrolm.facilis.maps
 
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -123,6 +124,23 @@ class MapsLogicTest {
         assertEquals(listOf(Step.Pause, Step.Stop), stepsBetween(Stage.Resumed, Stage.Created))
         assertEquals(listOf(Step.Pause), stepsBetween(Stage.Resumed, Stage.Started))
         assertEquals(emptyList<Step>(), stepsBetween(Stage.Started, Stage.Started))
+    }
+
+    // endregion
+
+    // region Saving
+
+    @Test
+    fun `points and distances survive saving`() {
+        val paths = listOf(listOf(Point(37.3352, -121.8811), Point(37.3360, -121.8820)), emptyList())
+        assertEquals(paths, Json.decodeFromString<List<List<Point>>>(Json.encodeToString(paths)))
+        assertEquals(1.5.km, Json.decodeFromString<Distance>(Json.encodeToString(1.5.km)))
+        assertEquals("""{"lat":1.0,"lng":2.0}""", Json.encodeToString(Point(1.0, 2.0)))
+    }
+
+    @Test
+    fun `a saved point out of range is rejected`() {
+        assertThrows(IllegalArgumentException::class.java) { Json.decodeFromString<Point>("""{"lat":91.0,"lng":0.0}""") }
     }
 
     // endregion
