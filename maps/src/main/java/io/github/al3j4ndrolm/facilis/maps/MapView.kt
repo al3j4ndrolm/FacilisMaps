@@ -159,11 +159,13 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
 
     /**
      * Which way the top of the map points: [Heading.North], the way the user walks
-     * ([Heading.Walking]), the way the phone points ([Heading.Phone]), a fixed direction or toward a place.
+     * ([Heading.Walking]), the way the phone points ([Heading.Phone]), a fixed direction, toward a
+     * place, or a tilted view that follows [center] ([Heading.Cinematic]).
      */
     var heading: Heading = Heading.North
         set(value) {
             if (field == value) return
+            if (value == Heading.Cinematic) movement.reset()
             field = value
             applyHeading()
         }
@@ -213,6 +215,10 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
     private var arrivesAt = 0L
     private var headingJob: Job? = null
 
+    /** The way [center] moves, for [Heading.Cinematic], and when it last moved. */
+    private val movement = MovementDirection()
+    private var lastCenterAt = 0L
+
     private var owner: LifecycleOwner? = null
     private var attached = false
     private var stage = Stage.Created
@@ -254,12 +260,28 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         }
         val here = goingTo ?: m.cameraPosition
         val target = zoom ?: here.zoom.takeIf { it >= MIN_STREET_ZOOM } ?: STREET_ZOOM
-        val bearing = (heading as? Heading.Towards)?.let { point.bearingTo(it.point) } ?: here.bearing
-        val position = CameraPosition.Builder(here).target(point.toLatLng()).zoom(target).bearing(bearing).build()
+        val cinematic = heading == Heading.Cinematic
+        val bearing = when (val h = heading) {
+            is Heading.Towards -> directionTo(point, h.point)
+            Heading.Cinematic -> movement.moveTo(point)
+            else -> null
+        } ?: here.bearing
+        val position = CameraPosition.Builder(here).target(point.toLatLng()).zoom(target).bearing(bearing)
+            .apply { if (cinematic) tilt(CINEMATIC_TILT) }
+            .build()
         // A spot already on screen (e.g. following the user) slides there, without the zoom out and
         // back in of a fly, which makes the labels redraw.
         val near = target == here.zoom && m.projection.visibleRegion.latLngBounds.contains(point.toLatLng())
-        go(m, position, animate, fly = !near)
+        val now = SystemClock.uptimeMillis()
+        val sinceLast = now - lastCenterAt
+        lastCenterAt = now
+        if (cinematic && near && sinceLast in MIN_GLIDE_MS..MAX_GLIDE_MS) {
+            // Centers coming one after another: glide at a steady pace for as long as the last one
+            // took, so the moves join into one flight instead of starting and stopping each time.
+            go(m, position, animate, smooth = false, ms = sinceLast.toInt())
+        } else {
+            go(m, position, animate, fly = !near)
+        }
     }
 
     /** Moves and zooms the map so all [points] show. Defaults to every marker and shape. */
@@ -434,10 +456,17 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         headingJob = null
         val m = map ?: return
         if (!cameraReady) return
+        val tilt = if (heading == Heading.Cinematic) CINEMATIC_TILT else 0.0
+        val here = goingTo ?: m.cameraPosition
+        if (here.tilt != tilt) go(m, CameraPosition.Builder(here).tilt(tilt).build(), animate = true)
         when (val h = heading) {
             Heading.North -> turnTo(0.0)
             is Heading.Degrees -> turnTo(h.degrees)
-            is Heading.Towards -> (goingTo ?: m.cameraPosition).target?.let { turnTo(it.toPoint().bearingTo(h.point)) }
+            is Heading.Towards -> (goingTo ?: m.cameraPosition).target?.let { from ->
+                directionTo(from.toPoint(), h.point)?.let { turnTo(it) }
+            }
+            // It turns as the center moves.
+            Heading.Cinematic -> Unit
             Heading.Walking, Heading.Phone -> followHeading()
         }
     }
@@ -678,6 +707,9 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         const val ANIMATION_MS = 600
         const val COMPASS_TURN_MS = 150
         const val MIN_TURN_DEGREES = 1.0
+        const val CINEMATIC_TILT = 60.0
+        const val MIN_GLIDE_MS = 100L
+        const val MAX_GLIDE_MS = 2000L
     }
 }
 

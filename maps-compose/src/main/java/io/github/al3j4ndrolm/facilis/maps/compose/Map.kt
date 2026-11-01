@@ -23,7 +23,8 @@ import io.github.al3j4ndrolm.facilis.maps.Shape
  *   [markers] and [shapes] (or the user's location with [showMyLocation]).
  * @param zoom 0 shows the whole world, 15 a neighborhood, 20 a building.
  * @param heading which way the top of the map points: north, the way the user walks
- *   (`Heading.Walking`), the way the phone points (`Heading.Phone`), a fixed direction or toward a place.
+ *   (`Heading.Walking`), the way the phone points (`Heading.Phone`), a fixed direction, toward a
+ *   place, or a tilted view that follows `center` (`Heading.Cinematic`).
  * @param showMyLocation shows the user's location as a blue dot. Asks for the permission the first time.
  * @param onMoved runs with the new center each time the user stops moving the map.
  */

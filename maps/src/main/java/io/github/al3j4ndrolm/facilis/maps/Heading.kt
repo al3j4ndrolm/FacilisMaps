@@ -43,8 +43,62 @@ sealed interface Heading {
     /** A fixed direction: 0 is north, 90 east, 180 south, 270 west. */
     data class Degrees(val degrees: Double) : Heading
 
-    /** Toward [point] from the middle of the map, e.g. a destination. */
+    /** Toward [point] from the middle of the map, e.g. a destination. Once the middle is on it, the map keeps its direction. */
     data class Towards(val point: Point) : Heading
+
+    /**
+     * A tilted 3D view that faces the way `center` is moving and glides between your centers at a
+     * steady pace, e.g. replaying a walk by moving `center` from point to point.
+     */
+    data object Cinematic : Heading
+}
+
+/** The direction from [from] to [to], or null when they're (nearly) the same spot. */
+internal fun directionTo(from: Point, to: Point): Double? =
+    if (metersBetween(from, to) < SAME_SPOT_METERS) null else from.bearingTo(to)
+
+/**
+ * The way a point moves, averaged over its last few moves so small zigzags don't twitch the map.
+ * A jump far away (e.g. to the start of another route) starts over.
+ */
+internal class MovementDirection {
+    private var from: Point? = null
+    private var x = 0.0
+    private var y = 0.0
+
+    /** The direction after moving to [to], or null until it has clearly moved. */
+    fun moveTo(to: Point): Double? {
+        val start = from
+        from = to
+        if (start == null) return current()
+        val meters = metersBetween(start, to)
+        if (meters > MAX_STEP_METERS) {
+            x = 0.0
+            y = 0.0
+            return null
+        }
+        if (meters < SAME_SPOT_METERS) {
+            from = start
+            return current()
+        }
+        val step = Math.toRadians(start.bearingTo(to))
+        if (x == 0.0 && y == 0.0) {
+            x = cos(step)
+            y = sin(step)
+        } else {
+            x += MOVEMENT_SMOOTHING * (cos(step) - x)
+            y += MOVEMENT_SMOOTHING * (sin(step) - y)
+        }
+        return current()
+    }
+
+    fun reset() {
+        from = null
+        x = 0.0
+        y = 0.0
+    }
+
+    private fun current(): Double? = if (x == 0.0 && y == 0.0) null else (Math.toDegrees(atan2(y, x)) + 360) % 360
 }
 
 /**
@@ -117,3 +171,7 @@ internal fun compassDirections(context: Context): Flow<Double> = callbackFlow {
 private const val MIN_WALKING_SPEED = 0.7f
 private const val MIN_STEP_METERS = 8f
 private const val COMPASS_SMOOTHING = 0.2
+private const val SAME_SPOT_METERS = 1.0
+private const val MAX_STEP_METERS = 300.0
+private const val MOVEMENT_SMOOTHING = 0.4
+

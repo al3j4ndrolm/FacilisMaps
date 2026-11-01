@@ -170,6 +170,7 @@ private fun headingName(heading: Heading) = when (heading) {
     Heading.Walking -> "where I walk"
     Heading.Phone -> "where the phone points"
     is Heading.Towards -> "Alex"
+    Heading.Cinematic -> "cinematic"
     is Heading.Degrees -> "${heading.degrees}°"
 }
 

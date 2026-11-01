@@ -117,6 +117,13 @@ Map(center = here, showMyLocation = true, heading = Heading.Walking)
 | `Heading.Phone` | where the top of the phone points, from its compass |
 | `Heading.Degrees(90.0)` | a fixed direction: 0 north, 90 east |
 | `Heading.Towards(cafe)` | toward a place, from the middle of the map |
+| `Heading.Cinematic` | a tilted 3D view facing the way `center` moves |
+
+Replaying a walk? Use `Heading.Cinematic` and move `center` from point to point at your own pace. The map glides between them at a steady speed, so the replay looks like one continuous flight:
+
+```kotlin
+Map(center = here, heading = Heading.Cinematic, shapes = listOf(Line(path)))
+```
 
 The map turns smoothly, and keeps following `center` while it turns. For your own math, `here.bearingTo(cafe)` gives the direction in degrees. Views: `map.heading = Heading.Phone`.
 
@@ -159,10 +166,10 @@ Then add one dependency (min SDK 26):
 
 ```kotlin
 // Compose apps: Map(...), composable markers and rememberLocation, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.3.0")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.4.0")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.3.0")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.4.0")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.

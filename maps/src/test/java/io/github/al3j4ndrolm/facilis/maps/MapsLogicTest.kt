@@ -144,6 +144,32 @@ class MapsLogicTest {
     }
 
     @Test
+    fun `no direction to the same spot`() {
+        val a = Point(37.3352, -121.8811)
+        assertNull(directionTo(a, a))
+        assertEquals(0.0, directionTo(a, destination(a, 50.0, 0.0))!!, 0.01)
+    }
+
+    @Test
+    fun `cinematic follows the way the center moves, smoothly`() {
+        val start = Point(37.3352, -121.8811)
+        val direction = MovementDirection()
+        assertNull(direction.moveTo(start))
+        val north = destination(start, 10.0, 0.0)
+        assertEquals(0.0, direction.moveTo(north)!!, 0.1)
+        // Standing still keeps the direction.
+        assertEquals(0.0, direction.moveTo(north)!!, 0.1)
+        // A turn east eases in over a few steps instead of snapping.
+        val first = direction.moveTo(destination(north, 10.0, 90.0))!!
+        assertTrue(first > 10.0 && first < 80.0)
+        var at = destination(north, 10.0, 90.0)
+        repeat(10) { at = destination(at, 10.0, 90.0); direction.moveTo(at) }
+        assertEquals(90.0, direction.moveTo(destination(at, 10.0, 90.0))!!, 1.0)
+        // A jump to somewhere else starts over.
+        assertNull(direction.moveTo(destination(at, 5_000.0, 0.0)))
+    }
+
+    @Test
     fun `angles are compared the short way around`() {
         assertEquals(2.0, angleBetween(359.0, 1.0), 1e-9)
         assertEquals(2.0, angleBetween(1.0, 359.0), 1e-9)
