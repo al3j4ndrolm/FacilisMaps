@@ -10,6 +10,29 @@ import org.junit.Test
 
 class MapsLogicTest {
 
+    @Test
+    fun `steps count from the first reading of the phone's total`() {
+        val count = StepCount()
+        assertEquals(0, count.total(5230f))
+        assertEquals(1, count.total(5231f))
+        assertEquals(12, count.total(5242f))
+    }
+
+    @Test
+    fun `steps start over if the phone total resets after a restart`() {
+        val count = StepCount()
+        count.total(5230f)
+        assertEquals(0, count.total(3f))
+        assertEquals(2, count.total(5f))
+    }
+
+    @Test
+    fun `steps add up one at a time on phones without a total`() {
+        val count = StepCount()
+        assertEquals(1, count.step())
+        assertEquals(2, count.step())
+    }
+
     private val sjsu = Point(37.3352, -121.8811)
     private val sfo = Point(37.6213, -122.3790)
 

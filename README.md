@@ -148,6 +148,28 @@ LaunchedEffect(Unit) {
 Map(showMyLocation = true, shapes = listOf(Line(trail)))
 ```
 
+## Steps
+
+```kotlin
+steps.watch().collect { taken -> }             // 0, 1, 2, ... since you started collecting
+```
+
+In Compose:
+
+```kotlin
+val taken = rememberSteps()                    // Int, counts while this is on screen
+Text("$taken steps")
+```
+
+Counting a workout from a ViewModel, start to stop:
+
+```kotlin
+counting = viewModelScope.launch { steps.watch().collect { _steps.value = it } }
+counting?.cancel()                             // when the workout ends
+```
+
+The phone's own step sensor does the counting, so it's accurate and uses almost no battery, and it keeps counting while the screen is off. It asks for the physical activity permission the first time. `steps.available` tells you whether the phone can count steps at all; most phones can, some tablets and emulators can't.
+
 ## Install
 
 Add JitPack to `settings.gradle.kts`:
@@ -166,13 +188,13 @@ Then add one dependency (min SDK 26):
 
 ```kotlin
 // Compose apps: Map(...), composable markers and rememberLocation, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.4.3")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.5.0")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.4.3")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.5.0")
 ```
 
-No manifest changes: the internet and location permissions are merged in for you.
+No manifest changes: the internet, location and physical activity permissions are merged in for you.
 
 ## Good to know
 

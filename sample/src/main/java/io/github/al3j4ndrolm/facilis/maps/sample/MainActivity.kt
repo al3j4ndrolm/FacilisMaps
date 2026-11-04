@@ -47,6 +47,7 @@ import io.github.al3j4ndrolm.facilis.maps.Travel
 import io.github.al3j4ndrolm.facilis.maps.compose.Map
 import io.github.al3j4ndrolm.facilis.maps.compose.rememberLiveLocation
 import io.github.al3j4ndrolm.facilis.maps.compose.rememberLocation
+import io.github.al3j4ndrolm.facilis.maps.compose.rememberSteps
 import io.github.al3j4ndrolm.facilis.maps.compose.Marker
 import io.github.al3j4ndrolm.facilis.maps.location
 import io.github.al3j4ndrolm.facilis.maps.maps
@@ -96,6 +97,7 @@ private fun Demo() {
     // Where you were when the screen opened, and where you are now.
     val start = rememberLocation()
     val live = rememberLiveLocation()
+    val taken = rememberSteps()
     // Map<K, V> still means Kotlin's map next to the Map composable.
     val counts: Map<String, Int> = mapOf("pins" to campus.size)
 
@@ -122,7 +124,7 @@ private fun Demo() {
         )
         Column(Modifier.navigationBarsPadding().padding(16.dp)) {
             Text(
-                if (live == null) "Finding you…" else "Live: ${live.distanceTo(sjsu)} from SJSU (started ${start?.distanceTo(sjsu) ?: "?"})",
+                (if (live == null) "Finding you…" else "Live: ${live.distanceTo(sjsu)} from SJSU (started ${start?.distanceTo(sjsu) ?: "?"})") + " · $taken steps",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )

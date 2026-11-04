@@ -38,7 +38,7 @@ fun rememberLocation(timeout: Duration = 15.seconds): Point? {
  * Waits until the screen is showing: the permission dialog can't appear before that (e.g. behind
  * the lock screen), and asking then would count as a denial.
  */
-private suspend fun Lifecycle.awaitResumed() {
+internal suspend fun Lifecycle.awaitResumed() {
     currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
 }
 
