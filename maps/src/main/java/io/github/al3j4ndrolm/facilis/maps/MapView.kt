@@ -232,6 +232,11 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         inner.onCreate(null)
         inner.getMapAsync { m ->
             map = m
+            // The MapLibre logo is optional; the attribution button isn't (OpenStreetMap's license), so it takes the logo's corner.
+            with(m.uiSettings) {
+                isLogoEnabled = false
+                setAttributionMargins(logoMarginLeft, attributionMarginTop, attributionMarginRight, logoMarginBottom)
+            }
             listen(m)
             loadStyle()
             inner.doOnLayout { applyFirstCamera() }
