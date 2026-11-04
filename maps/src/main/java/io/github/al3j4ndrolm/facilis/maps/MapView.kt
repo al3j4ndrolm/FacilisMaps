@@ -13,6 +13,7 @@ import android.graphics.RectF
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
@@ -219,6 +220,9 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
     private val movement = MovementDirection()
     private var lastCenterAt = 0L
 
+    /** The credits button's distance from the corner on a full-size map. */
+    private var creditsMargin = 0
+
     private var owner: LifecycleOwner? = null
     private var attached = false
     private var stage = Stage.Created
@@ -235,8 +239,9 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
             // The MapLibre logo is optional; the attribution button isn't (OpenStreetMap's license), so it takes the logo's corner.
             with(m.uiSettings) {
                 isLogoEnabled = false
-                setAttributionMargins(logoMarginLeft, attributionMarginTop, attributionMarginRight, logoMarginBottom)
+                creditsMargin = logoMarginLeft
             }
+            sizeCredits()
             listen(m)
             loadStyle()
             inner.doOnLayout { applyFirstCamera() }
@@ -318,6 +323,29 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         destroyed = true
         scope.cancel()
         inner.onDestroy()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        sizeCredits()
+    }
+
+    /** Shrinks the credits button on small maps, e.g. a thumbnail in a list, so it doesn't cover them. */
+    private fun sizeCredits() {
+        val m = map ?: return
+        val button = inner.findViewWithTag<ImageView>(CREDITS_TAG) ?: return
+        val density = resources.displayMetrics.density
+        val side = minOf(width, height) / density
+        if (side <= 0) return
+        val size = (side * CREDITS_SHARE).coerceIn(MIN_CREDITS_DP, CREDITS_DP)
+        val margin = (side * CREDITS_MARGIN_SHARE * density).roundToInt()
+            .coerceAtMost(creditsMargin)
+            .coerceAtLeast((MIN_CREDITS_MARGIN_DP * density).roundToInt())
+        button.layoutParams = button.layoutParams.apply {
+            width = (size * density).roundToInt()
+            height = width
+        }
+        with(m.uiSettings) { setAttributionMargins(margin, attributionMarginTop, attributionMarginRight, margin) }
     }
 
     // region Lifecycle
@@ -715,6 +743,16 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         const val CINEMATIC_TILT = 60.0
         const val MIN_GLIDE_MS = 100L
         const val MAX_GLIDE_MS = 2000L
+
+        /** MapLibre tags its credits (ⓘ) button with this. */
+        const val CREDITS_TAG = "attrView"
+        /** The button's full size, and the smallest it gets on a tiny map. */
+        const val CREDITS_DP = 21f
+        const val MIN_CREDITS_DP = 8f
+        /** On maps under about 150dp, the button is this share of the map's short side. */
+        const val CREDITS_SHARE = 0.14f
+        const val CREDITS_MARGIN_SHARE = 0.07f
+        const val MIN_CREDITS_MARGIN_DP = 2
     }
 }
 
