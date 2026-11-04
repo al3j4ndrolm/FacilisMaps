@@ -20,7 +20,7 @@ import io.github.al3j4ndrolm.facilis.maps.Shape
  * ```
  *
  * @param center where the map looks. Changing it moves the map there; leave it null to fit all
- *   [markers] and [shapes] (or the user's location with [showMyLocation]).
+ *   [markers] and [shapes], again each time they change (or the user's location with [showMyLocation]).
  * @param zoom 0 shows the whole world, 15 a neighborhood, 20 a building.
  * @param heading which way the top of the map points: north, the way the user walks
  *   (`Heading.Walking`), the way the phone points (`Heading.Phone`), a fixed direction, toward a
@@ -43,8 +43,8 @@ fun Map(
     onMarkerTap: ((Marker) -> Unit)? = null,
     onMoved: ((Point) -> Unit)? = null,
 ) {
-    // Only move the camera when center or zoom change, so recomposing doesn't undo the user's panning.
-    val applied = remember { arrayOfNulls<Any>(2) }
+    // Only move the camera when center, zoom or what to fit change, so recomposing doesn't undo the user's panning.
+    val applied = remember { arrayOfNulls<Any>(3) }
     val parent = rememberCompositionContext()
     val icons = remember { arrayOfNulls<ContentIcons>(1) }
     AndroidView(
@@ -65,6 +65,12 @@ fun Map(
                 applied[0] = center
                 applied[1] = zoom
                 view.moveTo(center, zoom)
+            }
+            // Without a center, fit what's shown, e.g. a row in a list that now shows another path.
+            val content = markers.map { it.point } to shapes
+            if (center == null && content != applied[2]) {
+                applied[2] = content
+                if (markers.isNotEmpty() || shapes.isNotEmpty()) view.fit()
             }
         },
         onRelease = {

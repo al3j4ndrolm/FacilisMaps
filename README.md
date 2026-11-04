@@ -71,7 +71,7 @@ Map(
 )
 ```
 
-Leave `center` out and the map fits all your markers and shapes. Set it (and `zoom`, 0 = world, 15 = neighborhood) to move the map; it animates there whenever the value changes. Light or dark follows the system, or pass `style = MapStyle.Dark`. `onTap` and `onMoved` (the new center, each time the map stops) are there too.
+Leave `center` out and the map fits all your markers and shapes, and fits them again when they change. Set it (and `zoom`, 0 = world, 15 = neighborhood) to move the map; it animates there whenever the value changes. Light or dark follows the system, or pass `style = MapStyle.Dark`. `onTap` and `onMoved` (the new center, each time the map stops) are there too.
 
 Views? Same thing, with the lifecycle handled for you:
 
@@ -166,10 +166,10 @@ Then add one dependency (min SDK 26):
 
 ```kotlin
 // Compose apps: Map(...), composable markers and rememberLocation, plus everything else
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.4.2")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps-compose:1.4.3")
 
 // Views apps
-implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.4.2")
+implementation("com.github.al3j4ndrolm.FacilisMaps:maps:1.4.3")
 ```
 
 No manifest changes: the internet and location permissions are merged in for you.

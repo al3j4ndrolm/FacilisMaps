@@ -304,7 +304,8 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         }
         val b = boundsOf(points) ?: return
         if (b.isSpot) return moveTo(Point(b.north, b.east), STREET_ZOOM, animate)
-        val padding = (FIT_PADDING_DP * resources.displayMetrics.density).toInt()
+        // A small map, like a thumbnail in a list, gets less room around the points so they don't get squeezed out.
+        val padding = minOf(FIT_PADDING_DP * resources.displayMetrics.density, minOf(width, height) * FIT_PADDING_SHARE).toInt()
         val here = goingTo ?: m.cameraPosition
         val bounds = LatLngBounds.from(b.north, b.east, b.south, b.west)
         val position = m.getCameraForLatLngBounds(bounds, IntArray(4) { padding }, here.bearing, here.tilt) ?: return
@@ -736,6 +737,7 @@ class MapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
         const val STREET_ZOOM = 15.0
         const val MIN_STREET_ZOOM = 12.0
         const val FIT_PADDING_DP = 48
+        const val FIT_PADDING_SHARE = 0.15f
         const val TAP_SLOP_DP = 12
         const val ANIMATION_MS = 600
         const val COMPASS_TURN_MS = 150
