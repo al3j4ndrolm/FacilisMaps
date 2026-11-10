@@ -6,10 +6,6 @@
 
 **Maps and location for Android in one line.** No API key, no billing account, no lifecycle code, no manifest edits.
 
-<p align="center">
-  <img src="docs/social-preview.png" alt="FacilisMaps: maps and location for Android in one line" width="640">
-</p>
-
 Part of the Facilis family, with [FacilisCam](https://github.com/al3j4ndrolm/FacilisCam), [FacilisStorage](https://github.com/al3j4ndrolm/FacilisStorage), [FacilisPermission](https://github.com/al3j4ndrolm/FacilisPermission), [FacilisNotification](https://github.com/al3j4ndrolm/FacilisNotification) and [FacilisAI](https://github.com/al3j4ndrolm/FacilisAI).
 
 ```kotlin
