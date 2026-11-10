@@ -77,6 +77,7 @@ object FacilisLocation {
     }
 
     /** The last known location: instant, but may be a few minutes old. Asks for the permission if needed. */
+    @SuppressLint("MissingPermission") // asked on the first line
     suspend fun last(): Point? {
         if (!requestPermission()) return null
         return if (hasPlayServices()) {
