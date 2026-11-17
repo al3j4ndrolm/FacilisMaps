@@ -1,7 +1,6 @@
 # FacilisMaps
 
 [![JitPack](https://jitpack.io/v/al3j4ndrolm/FacilisMaps.svg)](https://jitpack.io/#al3j4ndrolm/FacilisMaps)
-[![Build](https://github.com/al3j4ndrolm/FacilisMaps/actions/workflows/build.yml/badge.svg)](https://github.com/al3j4ndrolm/FacilisMaps/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Maps and location for Android in one line.** No API key, no billing account, no lifecycle code, no manifest edits.
